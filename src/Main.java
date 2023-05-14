@@ -1,5 +1,11 @@
+import static utilitarios.DataBaseService.*;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        // cria o database e a tabela de dados no banco de dados;
+        createDatabase();
+        createTable();
+        // inicia a aplicação;
+        AgenciaBancaria.exibirMenu();
     }
 }

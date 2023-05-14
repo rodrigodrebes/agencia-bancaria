@@ -1,20 +1,22 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import entidades.Conta;
 import entidades.Pessoa;
+import utilitarios.DataBaseService;
 
 public class AgenciaBancaria {
     static Scanner input = new Scanner(System.in);
-    static ArrayList<Conta> contasBancarias;
 
-    public static void main(String[] args) {
-        contasBancarias = new ArrayList<Conta>();
+    //método comentado, salvaria as listas em memória
+    //static ArrayList<Conta> contasBancarias = new ArrayList<Conta>();
+    private static DataBaseService dbService = new DataBaseService();
+    static List<Conta> contasBancarias = dbService.buscarTodasContas();
 
-        // menu de operações
-        operacoes();
 
-    }
-    public static void operacoes(){
+
+
+    public static void exibirMenu(){
         System.out.println("-----------------------------");
         System.out.println("-----------BEM VINDO---------");
         System.out.println("-----------------------------");
@@ -51,10 +53,25 @@ public class AgenciaBancaria {
                 System.exit(0);
             default:
                 System.out.println("Opção inválida!");
-                operacoes();
+                exibirMenu();
                 break;
         }
     }
+
+    // método para encontrar conta na memória
+
+    /*private static Conta encontrarConta(int numeroConta) {
+        Conta conta = null;
+        if (contasBancarias.size() > 0) {
+            for (Conta c : contasBancarias) {
+                if (c.getNumeroConta() == numeroConta) {
+                    conta = c;
+                }
+            }
+
+        }return conta;
+    }
+*/
 
     public static void criarConta(){
         System.out.println("\n Nome: ");
@@ -68,92 +85,120 @@ public class AgenciaBancaria {
 
         Conta conta = new Conta(pessoa);
 
+        // salva em memória
         contasBancarias.add(conta);
+        // salva no banco de dados
+        dbService.criarConta(conta);
 
         System.out.println("Sua conta foi criada com sucesso!");
 
-        operacoes();
+        exibirMenu();
     }
-
-    private static Conta encontrarConta(int numeroConta) {
-        Conta conta = null;
-        if (contasBancarias.size() > 0) {
-            for (Conta c : contasBancarias) {
-                if (c.getNumeroConta() == numeroConta) {
-                    conta = c;
-                }
-            }
-
-        }return conta;
-    }
-
+    // método para encontrar conta na memória
 public static void depositar(){
     System.out.println("Digite o número da conta para Depósito: ");
     int numeroConta = input.nextInt();
 
-    Conta conta = encontrarConta(numeroConta);
+    // busca em memória
+    //Conta conta = encontrarConta(numeroConta);
+
+    //busca em banco de dados
+    Conta conta = dbService.buscarConta(numeroConta);
 
     if (conta != null){
         System.out.println("Qual valor deseja depositar?");
         Double valorDeposito = input.nextDouble();
+        // salva em memória
         conta.depositar(valorDeposito);
+        // salva no banco de dados
+        dbService.atualizarSaldoConta(conta.getNumeroConta(), conta.getSaldo());
         System.out.println("Valor depositado com sucesso!");
     }else{
         System.out.println("Conta não encontrada.");
     }
-    operacoes();
+    exibirMenu();
 }
 
 public static void sacar(){
 
     System.out.println("Digite o número da conta: ");
     int numeroConta = input.nextInt();
+    // busca em memória
+    //Conta conta = encontrarConta(numeroConta);
 
-    Conta conta = encontrarConta(numeroConta);
+    // busca em banco de dados
+    Conta conta = dbService.buscarConta(numeroConta);
 
     if (conta != null){
         System.out.println("Qual valor deseja sacar?");
         Double valorSaque = input.nextDouble();
+        // salva em memória
         conta.sacar(valorSaque);
+        // salva no banco de dados
+        dbService.atualizarSaldoConta(conta.getNumeroConta(), conta.getSaldo());
         System.out.println("Valor sacado com sucesso!");
     }else{
         System.out.println("Conta não encontrada.");
     }
-    operacoes();
 
+    exibirMenu();
 }
 
-public static void transferir(){
-    System.out.println("Número da conta remetente: ");
-    int numeroContaRemetente = input.nextInt();
+    public static void transferir() {
+        System.out.println("Número da conta remetente: ");
+        int numeroContaRemetente = input.nextInt();
 
-    Conta contaRemetente = encontrarConta(numeroContaRemetente);
+        // Antes, nós buscaríamos a conta na lista em memória usando o método encontrarConta:
+        // Conta contaRemetente = encontrarConta(numeroContaRemetente);
 
-    if(contaRemetente!=null){
-        System.out.println("Número da conta do Destinatário: ");
-        int numeroContaDestinatario = input.nextInt();
+        // Agora, buscamos a conta diretamente do banco de dados:
+        Conta contaRemetente = dbService.buscarConta(numeroContaRemetente);
 
-        Conta contaDestinatario = encontrarConta(numeroContaDestinatario);
-        if(contaDestinatario!= null){
-            System.out.println("Digite o valor da transferência: ");
-            Double valor = input.nextDouble();
+        if(contaRemetente != null) {
+            System.out.println("Número da conta do Destinatário: ");
+            int numeroContaDestinatario = input.nextInt();
 
-            contaRemetente.transferir(contaDestinatario, valor);
+            // Antes, nós buscaríamos a conta destinatária na lista em memória usando o método encontrarConta:
+            // Conta contaDestinatario = encontrarConta(numeroContaDestinatario);
+
+            // Agora, buscamos a conta destinatária diretamente do banco de dados:
+            Conta contaDestinatario = dbService.buscarConta(numeroContaDestinatario);
+
+            if(contaDestinatario != null) {
+                System.out.println("Digite o valor da transferência: ");
+                Double valor = input.nextDouble();
+
+                // Realiza a transferência
+                contaRemetente.transferir(contaDestinatario, valor);
+
+                // Antes, a atualização do saldo das contas era feita automaticamente na memória quando chamávamos o método transferir.
+
+                // Agora, precisamos atualizar o saldo das contas no banco de dados manualmente:
+                dbService.atualizarSaldoConta(contaRemetente.getNumeroConta(), contaRemetente.getSaldo());
+                dbService.atualizarSaldoConta(contaDestinatario.getNumeroConta(), contaDestinatario.getSaldo());
+            } else {
+                System.out.println("Conta destinatária não encontrada.");
+            }
+
+        } else {
+            System.out.println("Conta remetente não encontrada.");
         }
 
+        exibirMenu();
     }
-    operacoes();
-}
 
-public static void listarContas(){
-        if(contasBancarias.size()>0){
-            for(Conta conta: contasBancarias){
+
+    public static void listarContas(){
+        // recupera as contas do banco de dados e da memória;
+        List<Conta> contasDoBanco = dbService.buscarTodasContas();
+        if(contasDoBanco.size()>0 || contasBancarias.size()>0){
+            for(Conta conta: contasDoBanco){
                 System.out.println(conta);
             }
-            }else{
-                System.out.println("Não há contas cadastradas.");
-
+        } else {
+            System.out.println("Não há contas cadastradas.");
         }
-        operacoes();
-}
+        exibirMenu();
+    }
+
 }
