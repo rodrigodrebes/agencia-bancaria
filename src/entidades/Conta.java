@@ -11,7 +11,7 @@ public class Conta {
     public Conta(Pessoa pessoa) {
         this.numeroConta = contadorDeContas;
         this.pessoa = pessoa;
-        contadorDeContas =+ 1;
+        contadorDeContas += 1;
     }
 
     public int getNumeroConta() {
