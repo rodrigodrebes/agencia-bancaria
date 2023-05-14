@@ -14,8 +14,8 @@ import entidades.Pessoa;
 public class DataBaseService {
 
     private static final String url = "jdbc:postgresql://localhost:5432/";
-    private static final String user = "rodrigo";
-    private static final String password = "senha";
+    private static final String user = "user";
+    private static final String password = "password";
     private static final String dbName = "agencia_db";
 
     public static Connection connect() {
